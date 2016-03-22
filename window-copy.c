@@ -2027,21 +2027,21 @@ window_copy_cursor_next_word_end(struct window_pane *wp,
 {
 	struct window_copy_mode_data	*data = wp->modedata;
 	struct screen			*back_s = data->backing;
-	u_int				 px, py, xx, yy;
+	u_int				 px, px_plus_one, py, xx, yy;
 	int				 state = -1;
 
-	px = data->cx;
+	px_plus_one = data->cx + 1;
 	py = screen_hsize(back_s) + data->cy - data->oy;
 	xx = window_copy_find_length(wp, py);
 	yy = screen_hsize(back_s) + screen_size_y(back_s) - 1;
 
 	while (1) {
-		if (px == xx - 1 || window_copy_in_set(wp, px + 1, py, " ")) {
+		if (px_plus_one >= xx || window_copy_in_set(wp, px_plus_one, py, " ")) {
 			if (state > 0) {
 				break;
 			}
 			state = 0;
-		} else if (window_copy_in_set(wp, px + 1, py, class1)) {
+		} else if (window_copy_in_set(wp, px_plus_one, py, class1)) {
 			if (state == 2) {
 				break;
 			}
@@ -2053,17 +2053,25 @@ window_copy_cursor_next_word_end(struct window_pane *wp,
 			state = 2;
 		}
 
-		if (px == xx - 1) {
+		if (px_plus_one >= xx) {
 			if (py == yy) {
 				return;
 			}
 			window_copy_cursor_down(wp, 0);
-			px = 0;
+			px_plus_one = 0;
 			py = screen_hsize(back_s) + data->cy - data->oy;
 			xx = window_copy_find_length(wp, py);
 		} else {
-			++px;
+			++px_plus_one;
 		}
+	}
+
+	if (px_plus_one > 0) {
+		px = px_plus_one - 1;
+	} else {
+		// not generally reachable, but if we ran off the end of the
+		// entire buffer we'll get here
+		px = 0;
 	}
 
 	window_copy_update_cursor(wp, px, data->cy);
