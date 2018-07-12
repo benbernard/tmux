@@ -31,7 +31,9 @@
 #include <string.h>
 #include <unistd.h>
 #ifdef HAVE_DIRENT_H
+#undef unused
 # include <dirent.h>
+#define unused __attribute__ ((unused))
 # define NAMLEN(dirent) strlen((dirent)->d_name)
 #else
 # define dirent direct
